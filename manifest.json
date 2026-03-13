@@ -1,0 +1,43 @@
+{
+  "name": "Dev Reference",
+  "short_name": "DevRef",
+  "description": "Довідник по файлах backend/frontend та питаннях співбесіди",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "lang": "uk",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "developer tools"],
+  "shortcuts": [
+    {
+      "name": "Backend",
+      "url": "/?tab=backend",
+      "description": "Backend файли та структура"
+    },
+    {
+      "name": "Frontend",
+      "url": "/?tab=frontend",
+      "description": "Frontend файли та структура"
+    },
+    {
+      "name": "Співбесіда",
+      "url": "/?tab=interview",
+      "description": "Питання на співбесіді"
+    }
+  ]
+}

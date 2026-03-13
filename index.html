@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f1117" />
+    <meta name="description" content="Dev Reference — довідник по файлах та питаннях співбесіди" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Dev Reference</title>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header__inner">
+            <span class="header__logo">⌨ DevRef</span>
+            <button class="header__install" id="installBtn" hidden>↓ Встановити</button>
+        </div>
+        <!-- NAV TABS -->
+        <nav class="tabs" role="tablist">
+            <button class="tab tab--active" data-tab="backend" role="tab">Backend</button>
+            <button class="tab" data-tab="frontend" role="tab">Frontend</button>
+            <button class="tab" data-tab="interview" role="tab">Співбесіда</button>
+        </nav>
+    </header>
+
+    <!-- SEARCH -->
+    <div class="search-wrap">
+        <input class="search" id="searchInput" type="search" placeholder="🔍 Пошук..." autocomplete="off" />
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="main" id="mainContent">
+
+        <!-- ===== BACKEND TAB ===== -->
+        <section class="tab-panel" id="tab-backend">
+
+            <div class="section-title">Node.js / Express</div>
+
+            <div class="card" data-tags="backend node express">
+                <div class="card__header">
+                    <span class="badge badge--node">Node</span>
+                    <code class="card__file">app.js</code>
+                </div>
+                <p class="card__desc">Точка входу Express-додатку. Тут ініціалізується сервер, підключаються middleware,
+                    роути та слухається порт.</p>
+                <pre class="card__code"><code>const express = require('express');
+const app = express();
+
+app.use(express.json());
+app.use('/api', require('./routes'));
+
+app.listen(3000, () => console.log('Server running'));</code></pre>
+                <ul class="card__notes">
+                    <li>Завжди виносити роути в окремі файли</li>
+                    <li><code>express.json()</code> — парсинг тіла запиту</li>
+                    <li>Порт краще брати з <code>process.env.PORT</code></li>
+                </ul>
+            </div>
+
+            <div class="card" data-tags="backend node express">
+                <div class="card__header">
+                    <span class="badge badge--node">Node</span>
+                    <code class="card__file">server.js</code>
+                </div>
+                <p class="card__desc">Альтернативна точка входу — іноді відокремлюють логіку сервера від логіки додатку
+                    (app.js). Зручно для тестування.</p>
+                <pre class="card__code"><code>const app = require('./app');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT);</code></pre>
+                <ul class="card__notes">
+                    <li>При тестуванні <code>app.js</code> не запускає сервер сам по собі</li>
+                    <li>Такий поділ — хороша практика для Jest/Supertest</li>
+                </ul>
+            </div>
+
+            <div class="card" data-tags="backend routes api">
+                <div class="card__header">
+                    <span class="badge badge--node">Node</span>
+                    <code class="card__file">routes/index.js</code>
+                </div>
+                <p class="card__desc">Агрегатор роутів. Збирає всі маршрути і підключає до основного роутера.</p>
+                <pre class="card__code"><code>const router = require('express').Router();
+router.use('/users', require('./users'));
+router.use('/posts', require('./posts'));
+module.exports = router;</code></pre>
+            </div>
+
+            <div class="card" data-tags="backend controller mvc">
+                <div class="card__header">
+                    <span class="badge badge--node">Node</span>
+                    <code class="card__file">controllers/userController.js</code>
+                </div>
+                <p class="card__desc">Контролер — обробляє запит, викликає сервіс/модель, повертає відповідь. Не містить
+                    бізнес-логіки напряму.</p>
+                <pre class="card__code"><code>exports.getUser = async (req, res) => {
+  try {
+    const user = await UserService.findById(req.params.id);
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};</code></pre>
+                <ul class="card__notes">
+                    <li>Тонкі контролери — логіку в сервіс</li>
+                    <li>Завжди обробляти помилки через try/catch або next(err)</li>
+                </ul>
+            </div>
+
+            <div class="card" data-tags="backend service mvc">
+                <div class="card__header">
+                    <span class="badge badge--node">Node</span>
+                    <code class="card__file">services/userService.js</code>
+                </div>
+                <p class="card__desc">Сервісний шар — містить бізнес-логіку. Викликається з контролера, сам викликає
+                    модель/БД.</p>
+                <pre class="card__code"><code>const User = require('../models/User');
+
+exports.findById = async (id) => {
+  const user = await User.findByPk(id);
+  if (!user) throw new Error('Not found');
+  return user;
+};</code></pre>
+            </div>
+
+            <div class="card" data-tags="backend model database orm">
+                <div class="card__header">
+                    <span class="badge badge--db">DB</span>
+                    <code class="card__file">models/User.js</code>
+                </div>
+                <p class="card__desc">Модель даних (Sequelize/Mongoose). Описує структуру таблиці/колекції та зв'язки.
+                </p>
+                <pre class="card__code"><code>// Sequelize
+module.exports = (sequelize, DataTypes) => {
+  return sequelize.define('User', {
+    name: DataTypes.STRING,
+    email: { type: DataTypes.STRING, unique: true },
+    role: { type: DataTypes.ENUM('admin','user'), defaultValue: 'user' }
+  });
+};</code></pre>
+            </div>
+
+            <div class="card" data-tags="backend middleware auth">
+                <div class="card__header">
+                    <span class="badge badge--node">Node</span>
+                    <code class="card__file">middleware/auth.js</code>
+                </div>
+                <p class="card__desc">Middleware для перевірки JWT-токену. Додається перед захищеними роутами.</p>
+                <pre class="card__code"><code>const jwt = require('jsonwebtoken');
+
+module.exports = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    res.status(403).json({ error: 'Invalid token' });
+  }
+};</code></pre>
+                <ul class="card__notes">
+                    <li>Bearer-схема: <code>Authorization: Bearer &lt;token&gt;</code></li>
+                    <li>Секрет зберігати тільки в .env</li>
+                </ul>
+            </div>
+
+            <div class="card" data-tags="backend config env">
+                <div class="card__header">
+                    <span class="badge badge--config">Config</span>
+                    <code class="card__file">.env / config.js</code>
+                </div>
+                <p class="card__desc">Зберігання змінних середовища.Ніколи не комітити .env — лише .env.example.</p>
+                <pre class="card__code"><code>// .env
+PORT=3000
+DB_URL=mysql://user:pass@localhost/db
+JWT_SECRET=supersecret
+
+// config.js
+require('dotenv').config();
+module.exports = {
+  port: process.env.PORT || 3000,
+  jwtSecret: process.env.JWT_SECRET
+};</code></pre>
+            </div>
+
+            <div class="card" data-tags="backend database migration">
+                <div class="card__header">
+                    <span class="badge badge--db">DB</span>
+                    <code class="card__file">migrations/</code>
+                </div>
+                <p class="card__desc">Файли міграцій — версіонована схема БД. Sequelize CLI або Knex генерують та
+                    виконують їх.</p>
+                <pre class="card__code"><code>// sequelize migration
+module.exports = {
+  up: async (qi, Sequelize) => {
+    await qi.createTable('Users', {
+      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      email: Sequelize.STRING,
+      createdAt: Sequelize.DATE
+    });
+  },
+  down: async (qi) => qi.dropTable('Users')
+};</code></pre>
+            </div>
+
+            <div class="card" data-tags="backend package npm">
+                <div class="card__header">
+                    <span class="badge badge--config">Config</span>
+                    <code class="card__file">package.json</code>
+                </div>
+                <p class="card__desc">Метадані проекту, залежності, скрипти для запуску/тестування.</p>
+                <pre class="card__code"><code>{
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "test": "jest"
+  },
+  "dependencies": { "express": "^4.18" },
+  "devDependencies": { "nodemon": "^3.0", "jest": "^29" }
+}</code></pre>
+            </div>
+
+        </section>
+
+        <!-- ===== FRONTEND TAB ===== -->
+        <section class="tab-panel hidden" id="tab-frontend">
+
+            <div class="section-title">React / Vite</div>
+
+            <div class="card" data-tags="frontend react vite">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <code class="card__file">main.jsx</code>
+                </div>
+                <p class="card__desc">Точка входу React-додатку. Монтує кореневий компонент у DOM.</p>
+                <pre class="card__code"><code>import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  &lt;React.StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/React.StrictMode&gt;
+);</code></pre>
+                <ul class="card__notes">
+                    <li><code>StrictMode</code> — подвійний рендер у dev для пошуку побічних ефектів</li>
+                </ul>
+            </div>
+
+            <div class="card" data-tags="frontend react router">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <code class="card__file">App.jsx</code>
+                </div>
+                <p class="card__desc">Кореневий компонент. Зазвичай містить роутер, провайдери контексту, глобальний
+                    layout.</p>
+                <pre class="card__code"><code>import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
+
+export default function App() {
+  return (
+    &lt;BrowserRouter&gt;
+      &lt;Routes&gt;
+        &lt;Route path="/" element={&lt;Home /&gt;} /&gt;
+        &lt;Route path="/about" element={&lt;About /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/BrowserRouter&gt;
+  );
+}</code></pre>
+            </div>
+
+            <div class="card" data-tags="frontend react component">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <code class="card__file">components/Button.jsx</code>
+                </div>
+                <p class="card__desc">Приклад переиспользуємого компонента. Приймає props, повертає JSX.</p>
+                <pre class="card__code"><code>export default function Button({ children, onClick, variant = 'primary' }) {
+  return (
+    &lt;button
+      className={`btn btn--${variant}`}
+      onClick={onClick}
+    &gt;
+      {children}
+    &lt;/button&gt;
+  );
+}</code></pre>
+                <ul class="card__notes">
+                    <li>Дефолтні значення props через деструктуризацію</li>
+                    <li>Компоненти — з великої літери</li>
+                </ul>
+            </div>
+
+            <div class="card" data-tags="frontend react hooks state">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <code class="card__file">hooks/useFetch.js</code>
+                </div>
+                <p class="card__desc">Кастомний хук для отримання даних з API. Інкапсулює стан loading/error/data.</p>
+                <pre class="card__code"><code>import { useState, useEffect } from 'react';
+
+export function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(url)
+      .then(r => r.json())
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [url]);
+
+  return { data, loading, error };
+}</code></pre>
+            </div>
+
+            <div class="card" data-tags="frontend react context state">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <code class="card__file">context/AuthContext.jsx</code>
+                </div>
+                <p class="card__desc">Context API — глобальний стан без Redux. Підходить для auth, теми, мови.</p>
+                <pre class="card__code"><code>import { createContext, useContext, useState } from 'react';
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  return (
+    &lt;AuthContext.Provider value={{ user, setUser }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+}
+
+export const useAuth = () => useContext(AuthContext);</code></pre>
+            </div>
+
+            <div class="card" data-tags="frontend react pages">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <code class="card__file">pages/Home.jsx</code>
+                </div>
+                <p class="card__desc">Сторінковий компонент — прив'язаний до роуту. Збирає feature-компоненти разом.</p>
+                <pre class="card__code"><code>import { useFetch } from '../hooks/useFetch';
+import UserCard from '../components/UserCard';
+
+export default function Home() {
+  const { data, loading } = useFetch('/api/users');
+  if (loading) return &lt;p&gt;Завантаження...&lt;/p&gt;;
+  return (
+    &lt;div&gt;
+      {data?.map(u =&gt; &lt;UserCard key={u.id} user={u} /&gt;)}
+    &lt;/div&gt;
+  );
+}</code></pre>
+            </div>
+
+            <div class="card" data-tags="frontend vite config">
+                <div class="card__header">
+                    <span class="badge badge--config">Config</span>
+                    <code class="card__file">vite.config.js</code>
+                </div>
+                <p class="card__desc">Конфігурація Vite — аліаси, проксі для API, плагіни.</p>
+                <pre class="card__code"><code>import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: { alias: { '@': '/src' } },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3000'
+    }
+  }
+});</code></pre>
+                <ul class="card__notes">
+                    <li>Проксі вирішує CORS у dev-режимі</li>
+                    <li>Аліас <code>@</code> замінює довгі відносні шляхи</li>
+                </ul>
+            </div>
+
+            <div class="card" data-tags="frontend css module styles">
+                <div class="card__header">
+                    <span class="badge badge--css">CSS</span>
+                    <code class="card__file">styles / CSS Modules</code>
+                </div>
+                <p class="card__desc">CSS Modules — локальна область видимості стилів. Ім'я файлу:
+                    <code>Component.module.css</code></p>
+                <pre class="card__code"><code>/* Button.module.css */
+.btn { padding: 8px 16px; border-radius: 4px; }
+.primary { background: #3b82f6; color: white; }
+
+// Button.jsx
+import s from './Button.module.css';
+&lt;button className={`${s.btn} ${s.primary}`}&gt;</code></pre>
+            </div>
+
+            <div class="card" data-tags="frontend typescript types">
+                <div class="card__header">
+                    <span class="badge badge--ts">TS</span>
+                    <code class="card__file">types/index.ts</code>
+                </div>
+                <p class="card__desc">Централізовані TypeScript типи та інтерфейси для всього проекту.</p>
+                <pre class="card__code"><code>export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+}
+
+export type ApiResponse&lt;T&gt; = {
+  data: T;
+  error: string | null;
+  status: number;
+};</code></pre>
+            </div>
+
+            <div class="section-title" style="margin-top:24px">Структура проекту</div>
+
+            <div class="card" data-tags="frontend structure project">
+                <div class="card__header">
+                    <span class="badge badge--config">Config</span>
+                    <code class="card__file">Структура React/Vite</code>
+                </div>
+                <pre class="card__code"><code>src/
+├── assets/          # зображення, шрифти
+├── components/      # переиспользуємі компоненти
+│   └── ui/          # базові UI (Button, Input)
+├── context/         # Context providers
+├── hooks/           # кастомні хуки
+├── pages/           # сторінки (прив'язані до роутів)
+├── services/        # api.js, axios instance
+├── store/           # Redux / Zustand
+├── types/           # TypeScript типи
+├── utils/           # допоміжні функції
+├── App.jsx
+└── main.jsx</code></pre>
+            </div>
+
+        </section>
+
+        <!-- ===== INTERVIEW TAB ===== -->
+        <section class="tab-panel hidden" id="tab-interview">
+
+            <div class="section-title">JavaScript</div>
+
+            <div class="card interview-card" data-tags="interview js javascript closure">
+                <div class="card__header">
+                    <span class="badge badge--interview">JS</span>
+                    <span class="card__file">Що таке замикання (closure)?</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Відповідь:</strong> Функція, яка «запам'ятовує» лексичне оточення, в якому вона була
+                        створена, навіть після того, як зовнішня функція завершила виконання.</p>
+                    <pre class="card__code"><code>function counter() {
+  let count = 0;
+  return () => ++count;
+}
+const inc = counter();
+inc(); // 1
+inc(); // 2</code></pre>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li>Класична пастка з <code>var</code> в циклі — всі колбеки посилаються на одну змінну</li>
+                            <li><code>let</code>/<code>const</code> вирішують проблему (блочна область)</li>
+                            <li>Замикання можуть спричинити витік пам'яті, якщо зберігати великі об'єкти</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card interview-card" data-tags="interview js event loop async">
+                <div class="card__header">
+                    <span class="badge badge--interview">JS</span>
+                    <span class="card__file">Як працює Event Loop?</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Відповідь:</strong> JS однопоточний. Event Loop постійно перевіряє Call Stack — якщо він
+                        порожній, бере задачі з черги.</p>
+                    <ul class="card__notes">
+                        <li><strong>Call Stack</strong> — синхронний код</li>
+                        <li><strong>Microtask queue</strong> — Promise.then, queueMicrotask (виконується ПЕРЕД
+                            макротасками)</li>
+                        <li><strong>Macrotask queue</strong> — setTimeout, setInterval, I/O</li>
+                    </ul>
+                    <pre class="card__code"><code>console.log('1');
+setTimeout(() => console.log('2'), 0);
+Promise.resolve().then(() => console.log('3'));
+console.log('4');
+// Порядок: 1, 4, 3, 2</code></pre>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li>Мікротаски виконуються всі до наступного макротаску</li>
+                            <li><code>await</code> — синтаксичний цукор над Promise, теж мікротаск</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card interview-card" data-tags="interview js prototype">
+                <div class="card__header">
+                    <span class="badge badge--interview">JS</span>
+                    <span class="card__file">Прототипне наслідування</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Відповідь:</strong> Кожен об'єкт має <code>[[Prototype]]</code> — посилання на інший
+                        об'єкт. При пошуку властивості JS піднімається по ланцюжку прототипів.</p>
+                    <pre class="card__code"><code>const animal = { speak() { return 'sound'; } };
+const dog = Object.create(animal);
+dog.speak(); // 'sound' — з прототипу</code></pre>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li><code>class</code> — синтаксичний цукор, під капотом той самий прототип</li>
+                            <li><code>hasOwnProperty</code> перевіряє тільки власні, не прототипні</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card interview-card" data-tags="interview js this">
+                <div class="card__header">
+                    <span class="badge badge--interview">JS</span>
+                    <span class="card__file">Що таке this?</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Відповідь:</strong> <code>this</code> — контекст виконання. Залежить від того, ЯК
+                        викликана функція.</p>
+                    <ul class="card__notes">
+                        <li>Метод об'єкта → <code>this</code> = об'єкт</li>
+                        <li>Звичайна функція → <code>this</code> = undefined (strict) або window</li>
+                        <li>Arrow function → <code>this</code> з лексичного оточення</li>
+                        <li><code>call/apply/bind</code> → явне задання</li>
+                    </ul>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li>Arrow functions не мають свого this — часта причина багів у класах/колбеках</li>
+                            <li><code>bind</code> повертає нову функцію, не виконує її</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:24px">React</div>
+
+            <div class="card interview-card" data-tags="interview react hooks useeffect">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <span class="card__file">useEffect — як і коли використовувати?</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Відповідь:</strong> Хук для побічних ефектів — fetch, підписки, DOM-маніпуляції.
+                        Виконується після рендеру.</p>
+                    <pre class="card__code"><code>useEffect(() => {
+  // виконується після рендеру
+  fetchData();
+  return () => { /* cleanup */ };
+}, [dependency]); // [] — лише при mount</code></pre>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li>Порожній масив залежностей [] — ефект тільки при mount/unmount</li>
+                            <li>Без масиву — після кожного рендеру (небезпечно)</li>
+                            <li>Cleanup обов'язковий для підписок і таймерів</li>
+                            <li>React 18 StrictMode викликає ефект двічі в dev</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card interview-card" data-tags="interview react virtual dom reconciliation">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <span class="card__file">Virtual DOM і Reconciliation</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Відповідь:</strong> Virtual DOM — JS-представлення реального DOM. При зміні стану React
+                        порівнює (diffing) новий і старий vDOM і оновлює тільки змінені вузли.</p>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li><code>key</code> prop критичний для списків — без нього React не може ефективно
+                                порівняти елементи</li>
+                            <li>Не використовувати index як key при динамічних списках</li>
+                            <li>React 18: concurrent rendering — рендер переривається, пріоритезується</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card interview-card" data-tags="interview react memo performance">
+                <div class="card__header">
+                    <span class="badge badge--react">React</span>
+                    <span class="card__file">Оптимізація: memo, useMemo, useCallback</span>
+                </div>
+                <div class="interview-answer">
+                    <ul class="card__notes">
+                        <li><code>React.memo</code> — не ре-рендерить компонент якщо props не змінились</li>
+                        <li><code>useMemo</code> — мемоїзує результат обчислення</li>
+                        <li><code>useCallback</code> — мемоїзує функцію (посилання не змінюється)</li>
+                    </ul>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li>Не застосовувати скрізь — є накладні витрати</li>
+                            <li>Профілювати перед оптимізацією (React DevTools Profiler)</li>
+                            <li><code>useCallback</code> потрібен якщо функцію передаємо в мемоїзований дочірній
+                                компонент</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:24px">Node.js / Backend</div>
+
+            <div class="card interview-card" data-tags="interview node backend rest">
+                <div class="card__header">
+                    <span class="badge badge--node">Node</span>
+                    <span class="card__file">REST vs GraphQL</span>
+                </div>
+                <div class="interview-answer">
+                    <ul class="card__notes">
+                        <li><strong>REST</strong>: ресурс-орієнтований, кілька ендпоінтів, over/under-fetching</li>
+                        <li><strong>GraphQL</strong>: один ендпоінт, клієнт запитує тільки потрібні поля, сильна
+                            типізація</li>
+                    </ul>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li>REST простіший для кешування (HTTP-рівень)</li>
+                            <li>GraphQL N+1 проблема — вирішується через DataLoader</li>
+                            <li>REST краще для простих CRUD, GraphQL — для складних клієнтів з різними потребами</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card interview-card" data-tags="interview node async promise">
+                <div class="card__header">
+                    <span class="badge badge--node">Node</span>
+                    <span class="card__file">async/await vs Promise.then</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Відповідь:</strong> <code>async/await</code> — синтаксичний цукор над Promise. Робить
+                        асинхронний код схожим на синхронний.</p>
+                    <pre class="card__code"><code>// Promise
+fetch(url).then(r => r.json()).then(data => ...)
+
+// async/await
+const r = await fetch(url);
+const data = await r.json();</code></pre>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li>Паралельні запити: <code>Promise.all([...])</code>, а не послідовний await</li>
+                            <li><code>await</code> можна використовувати тільки в <code>async</code> функції</li>
+                            <li>Завжди обертати в try/catch</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card interview-card" data-tags="interview database sql index">
+                <div class="card__header">
+                    <span class="badge badge--db">DB</span>
+                    <span class="card__file">Що таке індекс у БД?</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Відповідь:</strong> Індекс — структура даних (B-Tree), яка прискорює пошук по стовпцю.
+                        Аналог змісту у книзі.</p>
+                    <div class="nuance">
+                        <span class="nuance__label">⚠ Нюанси</span>
+                        <ul>
+                            <li>Прискорює SELECT, але сповільнює INSERT/UPDATE/DELETE</li>
+                            <li>Не індексувати поля з низькою кардинальністю (boolean)</li>
+                            <li>Складні індекси: порядок стовпців важливий (leftmost prefix)</li>
+                            <li>EXPLAIN/EXPLAIN ANALYZE для аналізу запитів</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:24px">Загальні / HR</div>
+
+            <div class="card interview-card" data-tags="interview hr soft general">
+                <div class="card__header">
+                    <span class="badge badge--soft">Soft</span>
+                    <span class="card__file">Розкажіть про себе</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Структура:</strong> Теперішнє → Минуле → Майбутнє (чому ця компанія)</p>
+                    <div class="nuance">
+                        <span class="nuance__label">💡 Поради</span>
+                        <ul>
+                            <li>1–2 хвилини максимум</li>
+                            <li>Фокус на релевантному досвіді, а не хронології</li>
+                            <li>Закінчити питанням про роль або компанію</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card interview-card" data-tags="interview hr soft challenge">
+                <div class="card__header">
+                    <span class="badge badge--soft">Soft</span>
+                    <span class="card__file">Розкажіть про складну технічну проблему</span>
+                </div>
+                <div class="interview-answer">
+                    <p><strong>Структура STAR:</strong> Situation → Task → Action → Result</p>
+                    <div class="nuance">
+                        <span class="nuance__label">💡 Поради</span>
+                        <ul>
+                            <li>Конкретні цифри: «скоротив час запиту з 3с до 200мс»</li>
+                            <li>Підкреслити особистий вклад («я зробив», не «ми зробили»)</li>
+                            <li>Не уникати невдач — показати що вивчили з помилки</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- BOTTOM NAV (mobile) -->
+    <nav class="bottom-nav">
+        <button class="bottom-nav__btn bottom-nav__btn--active" data-tab="backend">
+            <span>⚙</span><small>Backend</small>
+        </button>
+        <button class="bottom-nav__btn" data-tab="frontend">
+            <span>🖥</span><small>Frontend</small>
+        </button>
+        <button class="bottom-nav__btn" data-tab="interview">
+            <span>💬</span><small>Співбесіда</small>
+        </button>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
